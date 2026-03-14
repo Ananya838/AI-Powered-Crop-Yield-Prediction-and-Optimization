@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api.routes import predictions, optimization, crops
+from app.api.routes import predictions, optimization, crops, weather
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -20,6 +20,7 @@ app.add_middleware(
 app.include_router(predictions.router, prefix="/api/v1/predictions", tags=["Predictions"])
 app.include_router(optimization.router, prefix="/api/v1/optimization", tags=["Optimization"])
 app.include_router(crops.router, prefix="/api/v1/crops", tags=["Crops"])
+app.include_router(weather.router, prefix="/api/v1/weather", tags=["Weather"])
 
 
 @app.get("/")

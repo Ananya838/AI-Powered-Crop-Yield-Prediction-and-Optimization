@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { predictYield } from '../services/api'
 import { Loader2, TrendingUp, AlertCircle } from 'lucide-react'
+import WeatherFetcher from '../components/WeatherFetcher'
 
 const CROPS = [
   'rice', 'wheat', 'maize', 'chickpea', 'kidneybeans', 'pigeonpeas',
@@ -80,6 +81,17 @@ export default function PredictPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <WeatherFetcher
+          onWeatherLoaded={(w) =>
+            setForm((f) => ({
+              ...f,
+              temperature: w.temperature,
+              rainfall: w.rainfall,
+              humidity: w.humidity,
+              sunshine_hours: w.sunshine_hours,
+            }))
+          }
+        />
         {/* Crop Info */}
         <div className="card space-y-4">
           <h2 className="font-semibold text-gray-700">Crop Information</h2>

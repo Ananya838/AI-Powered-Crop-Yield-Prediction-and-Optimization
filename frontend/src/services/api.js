@@ -11,5 +11,7 @@ export const getCrops = () => api.get('/crops/')
 export const getCropNames = () => api.get('/crops/names')
 export const getCropDetail = (name) => api.get(`/crops/${name}`)
 export const getSupportedCrops = () => api.get('/predictions/supported-crops')
+export const getWeatherByCity = (city) => api.get(`/weather/city/${encodeURIComponent(city)}`)
+export const getWeatherByCoords = (lat, lon) => api.get(`/weather/coords?lat=${lat}&lon=${lon}`)
 
 export default api

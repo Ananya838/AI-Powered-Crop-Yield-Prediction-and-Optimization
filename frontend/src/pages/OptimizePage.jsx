@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { optimizeFarm } from '../services/api'
 import { Loader2, AlertCircle, CheckCircle, ArrowUpCircle } from 'lucide-react'
+import WeatherFetcher from '../components/WeatherFetcher'
 
 const CROPS = [
   'rice', 'wheat', 'maize', 'chickpea', 'kidneybeans', 'pigeonpeas',
@@ -69,6 +70,17 @@ export default function OptimizePage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <WeatherFetcher
+          onWeatherLoaded={(w) =>
+            setForm((f) => ({
+              ...f,
+              temperature: w.temperature,
+              rainfall: w.rainfall,
+              humidity: w.humidity,
+              sunshine_hours: w.sunshine_hours,
+            }))
+          }
+        />
         <div className="card space-y-4">
           <h2 className="font-semibold text-gray-700">Crop & Farm Details</h2>
           <div className="grid grid-cols-4 gap-4">

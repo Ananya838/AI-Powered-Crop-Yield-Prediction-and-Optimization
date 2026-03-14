@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     MODEL_PATH: str = "ml/models"
     CORS_ORIGINS: list = ["http://localhost:5173", "http://localhost:3000"]
+    OPENWEATHER_API_KEY: str = ""  # Get free key at https://openweathermap.org/api
 
     class Config:
         env_file = ".env"
