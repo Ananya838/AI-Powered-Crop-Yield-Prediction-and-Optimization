@@ -1,0 +1,38 @@
+{
+  "best_model": "XGBoost",
+  "feature_columns": [
+    "nitrogen",
+    "phosphorus",
+    "potassium",
+    "ph",
+    "organic_carbon",
+    "temperature",
+    "rainfall",
+    "humidity",
+    "sunshine_hours",
+    "crop_code",
+    "season"
+  ],
+  "test_metrics": {
+    "MAE": 815.35,
+    "RMSE": 1360.61,
+    "R2": 0.9713
+  },
+  "all_results": {
+    "RandomForest": {
+      "MAE": 878.33,
+      "RMSE": 1600.93,
+      "R2": 0.9603
+    },
+    "GradientBoosting": {
+      "MAE": 1448.2,
+      "RMSE": 2337.24,
+      "R2": 0.9154
+    },
+    "XGBoost": {
+      "MAE": 815.35,
+      "RMSE": 1360.61,
+      "R2": 0.9713
+    }
+  }
+}
