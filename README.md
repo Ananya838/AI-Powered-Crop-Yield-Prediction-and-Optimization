@@ -11,7 +11,8 @@ An end-to-end machine learning application that helps farmers **predict crop yie
 | **Yield Prediction** | Predict crop yield (kg/ha) using soil NPK, pH, weather inputs and XGBoost/Random Forest models |
 | **Farm Optimization** | Get prioritized recommendations (fertilizer, irrigation, soil health) to improve yield |
 | **Crop Encyclopedia** | Browse ideal growing conditions for 23+ crops |
-| **Analytics Dashboard** | Bar charts, radar charts, prediction history |
+| **Analytics Dashboard** | Real charts, soil averages, and persisted prediction history |
+| **Prediction Persistence** | Saves every prediction to a database for later analysis |
 | **REST API** | FastAPI backend with interactive Swagger docs at `/docs` |
 
 ---
@@ -25,15 +26,18 @@ AI-Powered-Crop-Yield-Prediction-and-Optimization/
 │   ├── app/
 │   │   ├── main.py                 # FastAPI app entry point
 │   │   ├── config.py               # Settings (pydantic-settings)
+│   │   ├── db/                     # SQLAlchemy session + models
 │   │   ├── models/
 │   │   │   └── schemas.py          # Pydantic request/response models
 │   │   ├── api/routes/
-│   │   │   ├── predictions.py      # POST /api/v1/predictions/
+│   │   │   ├── predictions.py      # POST /api/v1/predictions/ + GET /dashboard
 │   │   │   ├── optimization.py     # POST /api/v1/optimization/
 │   │   │   └── crops.py            # GET  /api/v1/crops/
 │   │   └── services/
 │   │       ├── prediction_service.py   # ML inference + heuristic fallback
-│   │       └── crop_service.py         # Crop encyclopedia data
+│   │       ├── crop_service.py         # Crop encyclopedia data
+│   │       ├── history_service.py      # Prediction persistence + dashboard summary
+│   │       └── weather_service.py      # Real-time weather API integration
 │   ├── ml/
 │   │   ├── train.py                # Generate data + train models
 │   │   ├── evaluate.py             # Evaluation plots + per-crop metrics
@@ -83,6 +87,7 @@ docker-compose up --build
 
 - Frontend: http://localhost:80
 - API docs: http://localhost:8000/docs
+- PostgreSQL: localhost:5432
 
 ---
 
@@ -100,6 +105,9 @@ source venv/bin/activate       # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Optional: copy env settings
+cp ../.env.example .env
+
 # Train the ML model (generates ml/models/*.joblib)
 python ml/train.py
 
@@ -109,6 +117,9 @@ uvicorn app.main:app --reload --port 8000
 
 API available at: http://localhost:8000  
 Swagger UI: http://localhost:8000/docs
+
+By default, local development uses SQLite via `DATABASE_URL=sqlite:///./cropai.db`.
+Docker uses PostgreSQL automatically.
 
 #### Frontend
 
@@ -157,6 +168,7 @@ Frontend available at: http://localhost:5173
 | Method | Endpoint | Description |
 |---|---|---|
 | `POST` | `/api/v1/predictions/` | Predict crop yield |
+| `GET` | `/api/v1/predictions/dashboard` | Aggregated dashboard stats and recent history |
 | `POST` | `/api/v1/optimization/` | Get farm optimization recommendations |
 | `GET` | `/api/v1/crops/` | List all crops with ideal conditions |
 | `GET` | `/api/v1/crops/{name}` | Get details for a specific crop |
@@ -196,6 +208,7 @@ curl -X POST http://localhost:8000/api/v1/predictions/ \
 | Layer | Technology |
 |---|---|
 | Backend | Python 3.11, FastAPI, Pydantic v2 |
+| Persistence | SQLAlchemy, SQLite (local), PostgreSQL (Docker) |
 | ML | scikit-learn, XGBoost, pandas, numpy |
 | Frontend | React 18, Vite, Tailwind CSS, Recharts |
 | Containerization | Docker, docker-compose |
@@ -211,9 +224,9 @@ Rice, Wheat, Maize, Chickpea, Kidney Beans, Pigeon Peas, Moth Beans, Mung Bean, 
 
 ## 🔮 Future Enhancements
 
-- [ ] Real weather API integration (OpenWeatherMap)
+- [x] Real weather API integration (OpenWeatherMap)
 - [ ] User authentication + farm profiles
-- [ ] PostgreSQL database for prediction history
+- [x] PostgreSQL database for prediction history
 - [ ] Market price integration for profit estimation
 - [ ] Mobile app (React Native)
 - [ ] Satellite imagery analysis

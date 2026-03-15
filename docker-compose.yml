@@ -1,16 +1,38 @@
 version: '3.9'
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cropai-postgres
+    environment:
+      POSTGRES_DB: cropai
+      POSTGRES_USER: cropai
+      POSTGRES_PASSWORD: cropai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cropai -d cropai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: cropai-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "8000:8000"
     environment:
       - DEBUG=false
       - CORS_ORIGINS=["http://localhost:80","http://localhost:5173","http://frontend"]
+      - DATABASE_URL=postgresql+psycopg2://cropai:cropai@postgres:5432/cropai
     volumes:
       - ./backend/ml/models:/app/ml/models
       - ./backend/data:/app/data
@@ -35,3 +57,4 @@ services:
 
 volumes:
   model_data:
+  postgres_data:

@@ -2,12 +2,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.api.routes import predictions, optimization, crops, weather
+from app.db import models
+from app.db.session import engine
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="AI-powered API for crop yield prediction and farm optimization",
 )
+
+models.Base.metadata.create_all(bind=engine)
 
 app.add_middleware(
     CORSMiddleware,

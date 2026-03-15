@@ -56,6 +56,32 @@ class PredictionResponse(BaseModel):
     model_used: str
 
 
+class PredictionHistoryItem(BaseModel):
+    id: int
+    date: str
+    crop: str
+    season: str
+    yield_kg_per_ha: float
+    area_hectares: float
+    total_yield_kg: float
+    confidence_score: float
+    model_used: str
+
+
+class PredictionDashboardStats(BaseModel):
+    total_predictions: int
+    average_yield_kg_per_ha: float
+    total_area_hectares: float
+    average_confidence_score: float
+
+
+class DashboardResponse(BaseModel):
+    stats: PredictionDashboardStats
+    crop_yields: list[dict]
+    soil_profile: list[dict]
+    recent_predictions: list[PredictionHistoryItem]
+
+
 class OptimizationRequest(BaseModel):
     crop_type: str
     soil: SoilData
