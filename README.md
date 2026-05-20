@@ -10,6 +10,9 @@ An end-to-end machine learning application that helps farmers **predict crop yie
 |---|---|
 | **Yield Prediction** | Predict crop yield (kg/ha) using soil NPK, pH, weather inputs and XGBoost/Random Forest models |
 | **Farm Optimization** | Get prioritized recommendations (fertilizer, irrigation, soil health) to improve yield |
+| **Live Soil Data Integration** | Fetch real-time soil data from **ISRIC SoilGrids** API using GPS coordinates to auto-fill soil attributes |
+| **Multilingual Support** | Fully localizable interface supporting **English** and **Kannada** for local farmers |
+| **Analytics & Visualization** | Compare predicted yield with regional baseline crop averages via dynamic comparison charts |
 | **Crop Encyclopedia** | Browse ideal growing conditions for 23+ crops |
 | **Analytics Dashboard** | Real charts, soil averages, and persisted prediction history |
 | **Prediction Persistence** | Saves every prediction to a database for later analysis |
@@ -32,12 +35,14 @@ AI-Powered-Crop-Yield-Prediction-and-Optimization/
 │   │   ├── api/routes/
 │   │   │   ├── predictions.py      # POST /api/v1/predictions/ + GET /dashboard
 │   │   │   ├── optimization.py     # POST /api/v1/optimization/
-│   │   │   └── crops.py            # GET  /api/v1/crops/
+│   │   │   ├── crops.py            # GET  /api/v1/crops/
+│   │   │   └── soil.py             # GET  /api/v1/soil/coords (SoilGrids fetch)
 │   │   └── services/
 │   │       ├── prediction_service.py   # ML inference + heuristic fallback
 │   │       ├── crop_service.py         # Crop encyclopedia data
 │   │       ├── history_service.py      # Prediction persistence + dashboard summary
-│   │       └── weather_service.py      # Real-time weather API integration
+│   │       ├── weather_service.py      # Real-time weather API integration
+│   │       └── soil_service.py         # ISRIC SoilGrids live data service
 │   ├── ml/
 │   │   ├── train.py                # Generate data + train models
 │   │   ├── evaluate.py             # Evaluation plots + per-crop metrics
@@ -56,7 +61,12 @@ AI-Powered-Crop-Yield-Prediction-and-Optimization/
 │   │   │   ├── CropsPage.jsx       # Crop encyclopedia
 │   │   │   └── DashboardPage.jsx   # Charts + history
 │   │   ├── components/
-│   │   │   └── Navbar.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── SoilFetcher.jsx     # Auto-fills soil using SoilGrids API
+│   │   │   ├── WeatherFetcher.jsx  # Weather panel with GPS support
+│   │   │   └── YieldChart.jsx      # Recharts bar chart comparing yield to avg
+│   │   ├── utils/
+│   │   │   └── translations.js     # Kannada & English localization dictionary
 │   │   └── services/api.js         # Axios API client
 │   ├── package.json
 │   ├── vite.config.js
@@ -67,7 +77,7 @@ AI-Powered-Crop-Yield-Prediction-and-Optimization/
 │   └── 02_model_training.ipynb     # Training + model comparison
 │
 ├── docker-compose.yml              # One-command full-stack deployment
-├── .env.example                    # Environment variable template
+│   ├── .env.example                # Environment variable template
 └── README.md
 ```
 
@@ -172,6 +182,7 @@ Frontend available at: http://localhost:5173
 | `POST` | `/api/v1/optimization/` | Get farm optimization recommendations |
 | `GET` | `/api/v1/crops/` | List all crops with ideal conditions |
 | `GET` | `/api/v1/crops/{name}` | Get details for a specific crop |
+| `GET` | `/api/v1/soil/coords` | Fetch real-time soil data from ISRIC SoilGrids by GPS coordinates |
 | `GET` | `/health` | Health check |
 
 ### Example Prediction Request
@@ -225,12 +236,13 @@ Rice, Wheat, Maize, Chickpea, Kidney Beans, Pigeon Peas, Moth Beans, Mung Bean, 
 ## 🔮 Future Enhancements
 
 - [x] Real weather API integration (OpenWeatherMap)
+- [x] Live Soil database integration (ISRIC SoilGrids API)
+- [x] Multi-language support for farmers (English & Kannada localization)
 - [ ] User authentication + farm profiles
 - [x] PostgreSQL database for prediction history
 - [ ] Market price integration for profit estimation
 - [ ] Mobile app (React Native)
 - [ ] Satellite imagery analysis
-- [ ] Multi-language support for farmers
 
 ---
 
