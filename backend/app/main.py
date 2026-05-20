@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api.routes import predictions, optimization, crops, weather
+from app.api.routes import predictions, optimization, crops, weather, soil
 from app.db import models
 from app.db.session import engine
 
@@ -25,6 +25,7 @@ app.include_router(predictions.router, prefix="/api/v1/predictions", tags=["Pred
 app.include_router(optimization.router, prefix="/api/v1/optimization", tags=["Optimization"])
 app.include_router(crops.router, prefix="/api/v1/crops", tags=["Crops"])
 app.include_router(weather.router, prefix="/api/v1/weather", tags=["Weather"])
+app.include_router(soil.router, prefix="/api/v1/soil", tags=["Soil"])
 
 
 @app.get("/")

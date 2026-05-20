@@ -7,7 +7,7 @@ import axios from 'axios'
  * and calls onWeatherLoaded({ temperature, rainfall, humidity, sunshine_hours })
  * so parent forms can auto-fill their weather fields.
  */
-export default function WeatherFetcher({ onWeatherLoaded }) {
+export default function WeatherFetcher({ onWeatherLoaded, onCoordsObtained }) {
   const [city, setCity] = useState('')
   const [loading, setLoading] = useState(false)
   const [locating, setLocating] = useState(false)
@@ -58,6 +58,10 @@ export default function WeatherFetcher({ onWeatherLoaded }) {
             humidity: data.humidity,
             sunshine_hours: data.sunshine_hours,
           })
+          // Pass GPS coords up so SoilFetcher can reuse them
+          if (onCoordsObtained) {
+            onCoordsObtained(coords.latitude, coords.longitude)
+          }
         } catch (err) {
           setError(err.response?.data?.detail || 'Could not fetch weather for your location.')
         } finally {

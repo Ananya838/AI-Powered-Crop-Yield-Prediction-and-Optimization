@@ -148,7 +148,7 @@ def get_optimization(request: OptimizationRequest) -> OptimizationResponse:
     elif request.soil.ph > 7.5:
         recommendations.append(Recommendation(
             category="Soil Health",
-            action=f"Apply elemental sulfur or organic matter to lower soil pH from {request.soil.ph} to 6.5–7.0.",
+            action=f"Apply gypsum (calcium sulfate) to lower soil pH from {request.soil.ph} to 6.5–7.0. Gypsum is more effective than sulfur for high-pH clay soils.",
             expected_improvement="5–10% yield increase",
             priority="High",
         ))
@@ -210,6 +210,37 @@ def get_optimization(request: OptimizationRequest) -> OptimizationResponse:
             action="Apply compost or farmyard manure (10–15 tons/ha) to boost organic carbon.",
             expected_improvement="8–12% long-term yield improvement",
             priority="Medium",
+        ))
+
+    # ── Crop-specific rules ──────────────────────────────────────────────────
+    crop = request.crop_type.lower()
+    temp = request.weather.temperature
+    rain = request.weather.rainfall
+    humidity = request.weather.humidity
+
+    if crop == "rice" and rain < 1000:
+        recommendations.append(Recommendation(
+            category="Irrigation",
+            action=f"Rice requires ≥1000 mm/year. Current rainfall is {rain} mm. Install flood or furrow irrigation to supplement.",
+            expected_improvement="20–35% yield protection for water-stressed rice",
+            priority="High",
+        ))
+
+    if crop == "wheat" and temp > 25:
+        recommendations.append(Recommendation(
+            category="Crop Management",
+            action=f"Wheat is heat-sensitive above 25°C. Current temperature: {temp}°C. Consider early sowing, mulching, or switching to a heat-tolerant variety.",
+            expected_improvement="Prevents 10–25% heat-induced yield loss",
+            priority="High",
+        ))
+
+    # High humidity → pest/disease warning
+    if humidity > 85:
+        recommendations.append(Recommendation(
+            category="Pest & Disease",
+            action=f"Humidity is {humidity}% — high risk of fungal diseases (blast, blight, rust). Apply preventive fungicide and improve field aeration.",
+            expected_improvement="Prevents 15–30% disease-induced yield loss",
+            priority="High",
         ))
 
     # Default recommendation if soil is already good

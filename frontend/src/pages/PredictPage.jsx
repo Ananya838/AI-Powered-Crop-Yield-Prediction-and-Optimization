@@ -1,7 +1,19 @@
+/**
+ * UPDATED: PredictPage.jsx
+ * Changes:
+ *   - GPS coords shared from WeatherFetcher → SoilFetcher (no second GPS prompt)
+ *   - SoilFetcher panel auto-fills N, P, K, pH, OC fields
+ *   - Language toggle (en / kn) using translations.js
+ *   - YieldChart (recharts bar chart) shown after prediction results
+ *   - All existing functionality preserved
+ */
 import { useState } from 'react'
 import { predictYield } from '../services/api'
-import { Loader2, TrendingUp, AlertCircle } from 'lucide-react'
+import { Loader2, TrendingUp, AlertCircle, Globe } from 'lucide-react'
 import WeatherFetcher from '../components/WeatherFetcher'
+import SoilFetcher from '../components/SoilFetcher'
+import YieldChart from '../components/YieldChart'
+import { t, LANGUAGES } from '../utils/translations'
 
 const CROPS = [
   'rice', 'wheat', 'maize', 'chickpea', 'kidneybeans', 'pigeonpeas',
@@ -31,6 +43,8 @@ export default function PredictPage() {
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [gpsCoords, setGpsCoords] = useState(null)   // { lat, lon } from WeatherFetcher GPS
+  const [lang, setLang] = useState('en')
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
@@ -75,12 +89,29 @@ export default function PredictPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Crop Yield Prediction</h1>
-        <p className="text-gray-500 mt-1">Enter your farm's soil and weather data to predict crop yield.</p>
+      {/* Header + Language Toggle */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">{t('predict_title', lang)}</h1>
+          <p className="text-gray-500 mt-1">{t('predict_subtitle', lang)}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Globe className="w-4 h-4 text-gray-400" />
+          <select
+            id="lang-select-predict"
+            className="input-field !w-auto !py-1.5 text-sm"
+            value={lang}
+            onChange={(e) => setLang(e.target.value)}
+          >
+            {LANGUAGES.map(({ code, label, flag }) => (
+              <option key={code} value={code}>{flag} {label}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Weather auto-fill — passes GPS coords to SoilFetcher */}
         <WeatherFetcher
           onWeatherLoaded={(w) =>
             setForm((f) => ({
@@ -91,43 +122,61 @@ export default function PredictPage() {
               sunshine_hours: w.sunshine_hours,
             }))
           }
+          onCoordsObtained={(lat, lon) => setGpsCoords({ lat, lon })}
         />
+
+        {/* Soil auto-fill from GPS + SoilGrids */}
+        <SoilFetcher
+          coords={gpsCoords}
+          lang={lang}
+          onSoilLoaded={(s) =>
+            setForm((f) => ({
+              ...f,
+              nitrogen: s.nitrogen,
+              phosphorus: s.phosphorus,
+              potassium: s.potassium,
+              ph: s.ph,
+              organic_carbon: s.organic_carbon,
+            }))
+          }
+        />
+
         {/* Crop Info */}
         <div className="card space-y-4">
-          <h2 className="font-semibold text-gray-700">Crop Information</h2>
+          <h2 className="font-semibold text-gray-700">{t('crop_info', lang)}</h2>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="label">Crop Type</label>
+              <label className="label">{t('crop_type', lang)}</label>
               <select className="input-field" value={form.crop_type} onChange={set('crop_type')}>
                 {CROPS.map((c) => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
               </select>
             </div>
             <div>
-              <label className="label">Season</label>
+              <label className="label">{t('season', lang)}</label>
               <select className="input-field" value={form.season} onChange={set('season')}>
                 {SEASONS.map((s) => <option key={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className="label">Farm Area (hectares)</label>
+              <label className="label">{t('farm_area', lang)}</label>
               <input type="number" step="0.1" min="0.1" className="input-field" value={form.area_hectares} onChange={set('area_hectares')} />
             </div>
           </div>
         </div>
 
-        {/* Soil Data */}
+        {/* Soil Data — pre-filled by SoilFetcher but still editable */}
         <div className="card space-y-4">
-          <h2 className="font-semibold text-gray-700">Soil Analysis</h2>
+          <h2 className="font-semibold text-gray-700">{t('soil_analysis', lang)}</h2>
           <div className="grid grid-cols-3 gap-4">
             {[
-              { key: 'nitrogen', label: 'Nitrogen (kg/ha)', min: 0, max: 200, step: 1 },
-              { key: 'phosphorus', label: 'Phosphorus (kg/ha)', min: 0, max: 200, step: 1 },
-              { key: 'potassium', label: 'Potassium (kg/ha)', min: 0, max: 200, step: 1 },
-              { key: 'ph', label: 'Soil pH', min: 0, max: 14, step: 0.1 },
-              { key: 'organic_carbon', label: 'Organic Carbon (%)', min: 0, max: 10, step: 0.1 },
-            ].map(({ key, label, min, max, step }) => (
+              { key: 'nitrogen', labelKey: 'nitrogen', min: 0, max: 200, step: 1 },
+              { key: 'phosphorus', labelKey: 'phosphorus', min: 0, max: 200, step: 1 },
+              { key: 'potassium', labelKey: 'potassium', min: 0, max: 200, step: 1 },
+              { key: 'ph', labelKey: 'soil_ph', min: 0, max: 14, step: 0.1 },
+              { key: 'organic_carbon', labelKey: 'organic_carbon', min: 0, max: 10, step: 0.1 },
+            ].map(({ key, labelKey, min, max, step }) => (
               <div key={key}>
-                <label className="label">{label}</label>
+                <label className="label">{t(labelKey, lang)}</label>
                 <input type="number" step={step} min={min} max={max} className="input-field"
                   value={form[key]} onChange={set(key)} />
               </div>
@@ -137,16 +186,16 @@ export default function PredictPage() {
 
         {/* Weather Data */}
         <div className="card space-y-4">
-          <h2 className="font-semibold text-gray-700">Weather Conditions</h2>
+          <h2 className="font-semibold text-gray-700">{t('weather_conditions', lang)}</h2>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { key: 'temperature', label: 'Temperature (°C)', min: -10, max: 60, step: 0.5 },
-              { key: 'rainfall', label: 'Annual Rainfall (mm)', min: 0, max: 5000, step: 10 },
-              { key: 'humidity', label: 'Humidity (%)', min: 0, max: 100, step: 1 },
-              { key: 'sunshine_hours', label: 'Sunshine Hours/day', min: 0, max: 16, step: 0.5 },
-            ].map(({ key, label, min, max, step }) => (
+              { key: 'temperature', labelKey: 'temperature', min: -10, max: 60, step: 0.5 },
+              { key: 'rainfall', labelKey: 'rainfall', min: 0, max: 5000, step: 10 },
+              { key: 'humidity', labelKey: 'humidity', min: 0, max: 100, step: 1 },
+              { key: 'sunshine_hours', labelKey: 'sunshine', min: 0, max: 16, step: 0.5 },
+            ].map(({ key, labelKey, min, max, step }) => (
               <div key={key}>
-                <label className="label">{label}</label>
+                <label className="label">{t(labelKey, lang)}</label>
                 <input type="number" step={step} min={min} max={max} className="input-field"
                   value={form[key]} onChange={set(key)} />
               </div>
@@ -155,7 +204,9 @@ export default function PredictPage() {
         </div>
 
         <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2" disabled={loading}>
-          {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</> : <><TrendingUp className="w-4 h-4" /> Predict Yield</>}
+          {loading
+            ? <><Loader2 className="w-4 h-4 animate-spin" />{t('analyzing', lang)}</>
+            : <><TrendingUp className="w-4 h-4" />{t('predict_btn', lang)}</>}
         </button>
       </form>
 
@@ -167,33 +218,43 @@ export default function PredictPage() {
       )}
 
       {result && (
-        <div className="card space-y-6 border-2 border-primary-100">
-          <h2 className="text-xl font-bold text-gray-800">Prediction Results</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-primary-50 rounded-xl">
-              <div className="text-3xl font-extrabold text-primary-700">
-                {result.predicted_yield_kg_per_ha.toLocaleString()}
+        <div className="space-y-6">
+          {/* Stat Cards (existing layout preserved) */}
+          <div className="card space-y-6 border-2 border-primary-100">
+            <h2 className="text-xl font-bold text-gray-800">{t('prediction_results', lang)}</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-primary-50 rounded-xl">
+                <div className="text-3xl font-extrabold text-primary-700">
+                  {result.predicted_yield_kg_per_ha.toLocaleString()}
+                </div>
+                <div className="text-sm text-gray-500 mt-1">{t('kg_per_ha', lang)}</div>
               </div>
-              <div className="text-sm text-gray-500 mt-1">kg / hectare</div>
-            </div>
-            <div className="text-center p-4 bg-blue-50 rounded-xl">
-              <div className="text-3xl font-extrabold text-blue-700">
-                {result.total_predicted_yield_kg.toLocaleString()}
+              <div className="text-center p-4 bg-blue-50 rounded-xl">
+                <div className="text-3xl font-extrabold text-blue-700">
+                  {result.total_predicted_yield_kg.toLocaleString()}
+                </div>
+                <div className="text-sm text-gray-500 mt-1">{t('total_kg', lang)}</div>
               </div>
-              <div className="text-sm text-gray-500 mt-1">Total kg</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-xl">
-              <div className="text-3xl font-extrabold text-purple-700">
-                {(result.confidence_score * 100).toFixed(1)}%
+              <div className="text-center p-4 bg-purple-50 rounded-xl">
+                <div className="text-3xl font-extrabold text-purple-700">
+                  {(result.confidence_score * 100).toFixed(1)}%
+                </div>
+                <div className="text-sm text-gray-500 mt-1">{t('confidence', lang)}</div>
               </div>
-              <div className="text-sm text-gray-500 mt-1">Confidence</div>
+              <div className={`text-center p-4 rounded-xl ${categoryColor[result.yield_category]}`}>
+                <div className="text-3xl font-extrabold">{result.yield_category}</div>
+                <div className="text-sm mt-1 opacity-75">{t('yield_category', lang)}</div>
+              </div>
             </div>
-            <div className={`text-center p-4 rounded-xl ${categoryColor[result.yield_category]}`}>
-              <div className="text-3xl font-extrabold">{result.yield_category}</div>
-              <div className="text-sm mt-1 opacity-75">Yield Category</div>
-            </div>
+            <p className="text-xs text-gray-400">{t('model_used', lang)}: {result.model_used}</p>
           </div>
-          <p className="text-xs text-gray-400">Model used: {result.model_used}</p>
+
+          {/* Bar Chart — NEW addition below existing cards */}
+          <YieldChart
+            predicted={result.predicted_yield_kg_per_ha}
+            cropType={form.crop_type}
+            lang={lang}
+          />
         </div>
       )}
     </div>

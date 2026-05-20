@@ -14,5 +14,6 @@ export const getSupportedCrops = () => api.get('/predictions/supported-crops')
 export const getPredictionDashboard = (limit = 10) => api.get(`/predictions/dashboard?limit=${limit}`)
 export const getWeatherByCity = (city) => api.get(`/weather/city/${encodeURIComponent(city)}`)
 export const getWeatherByCoords = (lat, lon) => api.get(`/weather/coords?lat=${lat}&lon=${lon}`)
+export const getSoilByCoords = (lat, lon) => api.get(`/soil/coords?lat=${lat}&lon=${lon}`)
 
 export default api
